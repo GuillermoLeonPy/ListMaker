@@ -8,10 +8,17 @@ import com.raywenderlich.listmaker.models.TaskList
 
 //pass the type of ViewHolder you want the RecyclerView Adapter to use
 //accept a MutableList of TaskList in its primary constructor
-class ListSelectionRecyclerViewAdapter(private val lists :MutableList<TaskList>): RecyclerView.Adapter<ListSelectionViewHolder>() {
+class ListSelectionRecyclerViewAdapter(
+    private val lists :MutableList<TaskList>,
+    val clickListener :ListSelectionRecyclerViewClickListener): RecyclerView.Adapter<ListSelectionViewHolder>() {
 //this class inherits from RecyclerView.Adapter, it needs to implement
 //additional methods so it knows what to do when used in conjunction with a RecyclerView
 
+    //an Interface Activity can implement to communicate with the Activity whenever a list item is tapped
+    //Then, the ViewHolder used by the RecyclerView can inform the RecyclerView of any taps
+    interface ListSelectionRecyclerViewClickListener {
+        fun listItemClicked(list: TaskList)
+    }
       override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ListSelectionViewHolder {
         //LayoutInflater is a system utility used to instantiate (or "inflate") a layout XML file (list_selection_view_holder.xml)
         // into its corresponding View objects
@@ -28,13 +35,18 @@ class ListSelectionRecyclerViewAdapter(private val lists :MutableList<TaskList>)
 
     //Binding data to your ViewHolder
     //bind the titles to the ViewHolder at the right time depending on what position it has within the RecyclerView
-    override fun onBindViewHolder(holder: ListSelectionViewHolder, position: Int) {//This is called repeatedly as you scroll through the RecyclerView
+    override fun onBindViewHolder(holder: ListSelectionViewHolder, position: Int) {
+        //This is called repeatedly as you scroll through the RecyclerView
         //list_selection_view_holder.xml: the layout needed for the ViewHolder to display each item in the RecyclerView
         //*************************************it is required to Build the app to allow the view bindings to generate
         //declares TextView with id: itemNumber
         //declares TextView with id: itemString
         holder.binding.itemNumber.text = (position + 1).toString()
         holder.binding.itemString.text = lists[position].name
+        //the ViewHolder used by the RecyclerView can inform the RecyclerView of any taps
+        holder.itemView.setOnClickListener {
+            clickListener.listItemClicked(lists[position])
+        }
     }
 
     //to inform the Adapter that you updated the data source which updates the RecyclerView

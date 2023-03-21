@@ -1,5 +1,6 @@
 package com.raywenderlich.listmaker
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.preference.PreferenceManager
@@ -9,14 +10,21 @@ import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
 import com.raywenderlich.listmaker.databinding.ActivityMainBinding
 import com.raywenderlich.listmaker.models.TaskList
+import com.raywenderlich.listmaker.ui.detail.ListDetailActivity
 import com.raywenderlich.listmaker.ui.main.MainFragment
 import com.raywenderlich.listmaker.ui.main.MainViewModel
 import com.raywenderlich.listmaker.ui.main.MainViewModelFactory
 
-class MainActivity : AppCompatActivity() {
+//implments the interface MainFragmentInteractionListener to implement listItemTapped
+class MainActivity : AppCompatActivity(), MainFragment.MainFragmentInteractionListener {
 
     private lateinit var viewModel: MainViewModel//a property to hold the ViewModel
     private lateinit var binding: ActivityMainBinding//a property to store the binding
+
+    //This constant is used by the Intent to refer to a list whenever it needs to pass one to the new Activity
+    companion object {
+        const val INTENT_LIST_KEY = "list"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,8 +46,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(view)
 
         if (savedInstanceState == null) {
+            //as defined in the companion object in the MainFragment; the newInstance method
+            val mainFragment = MainFragment.newInstance(this)
             supportFragmentManager.beginTransaction()
-                .replace(R.id.container, MainFragment.newInstance())
+                .replace(R.id.container, mainFragment)
                 .commitNow()
         }
 
@@ -64,9 +74,28 @@ class MainActivity : AppCompatActivity() {
         builder.setPositiveButton(positiveButtonTitle) {
                 dialog, _ -> dialog.dismiss()
             //to create a new list in MainViewModel
-            viewModel.saveList(TaskList(listTitleEditText.text.toString()))
+            val taskList = TaskList(listTitleEditText.text.toString())
+            viewModel.saveList(taskList)
+            showListDetail(taskList)//the app passes that list to the new Activity
         }
 
         builder.create().show()
+    }
+
+    private fun showListDetail(list: TaskList) {
+        //create an Intent and pass in the current Activity and class of the Activity you
+        //want to show on the screen. Think of this as saying you’re currently on this
+        //screen, now you want to move to that screen
+        val listDetailIntent = Intent(this, ListDetailActivity::class.java)
+        //Extras are keys with associated values
+        listDetailIntent.putExtra(INTENT_LIST_KEY, list)
+        //a method call to inform the current Activity to start another
+        //Activity, making use of the information provided within the Intent
+        startActivity(listDetailIntent)
+    }
+
+    //implement the interface method to pass the list to your method that creates the new Activity
+    override fun listItemTapped(list: TaskList) {
+        showListDetail(list)
     }
 }
